@@ -9,14 +9,15 @@ import (
 type H map[string]interface{}
 
 type Context struct {
-	Writer     http.ResponseWriter
-	Req        *http.Request
-	StatusCode int
-	Params     map[string]string
-	Method     string
-	Path       string
-	handlers   []HandlerFunc
-	index      int
+	Writer     	http.ResponseWriter
+	Req        	*http.Request
+	StatusCode 	int
+	Params     	map[string]string
+	Method     	string
+	Path       	string
+	handlers   	[]HandlerFunc
+	index      	int
+	engine 		*Engine
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context {
@@ -66,10 +67,12 @@ func (c *Context) Data(code int, data []byte) {
 	c.Writer.Write(data)
 }
 
-func (c *Context) Html(code int, html string) {
+func (c *Context) Html(code int, name string, data interface{}) {
 	c.SetHeader("Content-Type", "text/html")
 	c.Status(code)
-	c.Writer.Write([]byte(html))
+	if err := c.engine.htmlTemplates.ExecuteTemplate(c.Writer, name, data); err != nil {
+		c.Fail(500, err.Error())
+	}
 }
 
 func (c *Context) Param(key string) string {
